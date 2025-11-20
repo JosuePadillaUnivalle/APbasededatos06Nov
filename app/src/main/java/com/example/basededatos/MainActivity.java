@@ -5,7 +5,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -14,6 +13,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -26,7 +30,14 @@ public class MainActivity extends AppCompatActivity {
     private DBSalar dbHelper;
     private SQLiteDatabase db;
     private TextView tvResultado;
-    private Button btnTestSQLite, btnTestAPI;
+    private MaterialButton btnTestSQLite, btnTestAPI, btnVerUsuarios, btnVerEmpresas, btnVerProductos;
+    private RecyclerView recyclerView;
+    private MaterialCardView cardRecyclerView;
+    private TextView tvTituloRecycler;
+    
+    private UsuarioAdapter usuarioAdapter;
+    private EmpresaAdapter empresaAdapter;
+    private ProductoAdapter productoAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +58,15 @@ public class MainActivity extends AppCompatActivity {
         tvResultado = findViewById(R.id.tvResultado);
         btnTestSQLite = findViewById(R.id.btnTestSQLite);
         btnTestAPI = findViewById(R.id.btnTestAPI);
+        btnVerUsuarios = findViewById(R.id.btnVerUsuarios);
+        btnVerEmpresas = findViewById(R.id.btnVerEmpresas);
+        btnVerProductos = findViewById(R.id.btnVerProductos);
+        recyclerView = findViewById(R.id.recyclerView);
+        cardRecyclerView = findViewById(R.id.cardRecyclerView);
+        tvTituloRecycler = findViewById(R.id.tvTituloRecycler);
+        
+        // Configurar RecyclerView
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
         
         // Botón para probar operaciones SQLite
         btnTestSQLite.setOnClickListener(new View.OnClickListener() {
@@ -61,6 +81,30 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 probarConexionAPI();
+            }
+        });
+        
+        // Botón para ver usuarios en RecyclerView
+        btnVerUsuarios.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mostrarUsuariosEnRecyclerView();
+            }
+        });
+        
+        // Botón para ver empresas en RecyclerView
+        btnVerEmpresas.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mostrarEmpresasEnRecyclerView();
+            }
+        });
+        
+        // Botón para ver productos en RecyclerView
+        btnVerProductos.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mostrarProductosEnRecyclerView();
             }
         });
     }
@@ -144,6 +188,69 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(this, "Operaciones SQLite completadas", Toast.LENGTH_SHORT).show();
     }
     
+    private void mostrarUsuariosEnRecyclerView() {
+        try {
+            UsuarioDAO usuarioDAO = new UsuarioDAO(db);
+            Cursor cursor = usuarioDAO.obtenerTodosUsuarios();
+            
+            if (cursor.getCount() > 0) {
+                usuarioAdapter = new UsuarioAdapter(cursor);
+                recyclerView.setAdapter(usuarioAdapter);
+                tvTituloRecycler.setText("Usuarios (" + cursor.getCount() + ")");
+                cardRecyclerView.setVisibility(View.VISIBLE);
+                Toast.makeText(this, "Mostrando " + cursor.getCount() + " usuarios", Toast.LENGTH_SHORT).show();
+            } else {
+                cardRecyclerView.setVisibility(View.GONE);
+                Toast.makeText(this, "No hay usuarios en la base de datos. Ejecuta CRUD primero.", Toast.LENGTH_LONG).show();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error mostrando usuarios", e);
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    private void mostrarEmpresasEnRecyclerView() {
+        try {
+            EmpresaDAO empresaDAO = new EmpresaDAO(db);
+            Cursor cursor = empresaDAO.obtenerTodasEmpresas();
+            
+            if (cursor.getCount() > 0) {
+                empresaAdapter = new EmpresaAdapter(cursor);
+                recyclerView.setAdapter(empresaAdapter);
+                tvTituloRecycler.setText("Empresas (" + cursor.getCount() + ")");
+                cardRecyclerView.setVisibility(View.VISIBLE);
+                Toast.makeText(this, "Mostrando " + cursor.getCount() + " empresas", Toast.LENGTH_SHORT).show();
+            } else {
+                cardRecyclerView.setVisibility(View.GONE);
+                Toast.makeText(this, "No hay empresas en la base de datos. Ejecuta CRUD primero.", Toast.LENGTH_LONG).show();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error mostrando empresas", e);
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    private void mostrarProductosEnRecyclerView() {
+        try {
+            ProductoDAO productoDAO = new ProductoDAO(db);
+            Cursor cursor = productoDAO.obtenerTodosProductos();
+            
+            if (cursor.getCount() > 0) {
+                productoAdapter = new ProductoAdapter(cursor);
+                recyclerView.setAdapter(productoAdapter);
+                tvTituloRecycler.setText("Productos (" + cursor.getCount() + ")");
+                cardRecyclerView.setVisibility(View.VISIBLE);
+                Toast.makeText(this, "Mostrando " + cursor.getCount() + " productos", Toast.LENGTH_SHORT).show();
+            } else {
+                cardRecyclerView.setVisibility(View.GONE);
+                Toast.makeText(this, "No hay productos en la base de datos. Ejecuta CRUD primero.", Toast.LENGTH_LONG).show();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error mostrando productos", e);
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+    
     private void probarConexionAPI() {
         tvResultado.setText("Conectando con API...");
         
@@ -160,6 +267,7 @@ public class MainActivity extends AppCompatActivity {
                     resultado.append("=== CONEXIÓN API EXITOSA ===\n\n");
                     resultado.append("Respuesta recibida: ").append(response.body().size()).append(" elementos\n");
                     resultado.append("Código HTTP: ").append(response.code()).append("\n");
+                    resultado.append("URL: ").append(call.request().url()).append("\n");
                     resultado.append("\n✓ La conexión con la API funciona correctamente!");
                     
                     tvResultado.setText(resultado.toString());
